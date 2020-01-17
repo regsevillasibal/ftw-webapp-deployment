@@ -1,73 +1,84 @@
-# Primary Packages
-import pandas as pd
+# Import Packages
 import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd 
+import joblib 
+
+
+# Import Seaborn
 import streamlit as st
 
-# Package to Load Model
-import joblib
+# Title of your Web App
+st.title('Forecasting Sales')
 
-@st.cache
-def load_data():
-    return pd.read_csv('data/census.csv')
+# Describe your Web App
+st.write("We demonstrate how we can forecast advertising sales based on ad expenditure.")
 
-data = load_data()
+# Read Data
+data = pd.read_csv('advertising_regression.csv')
 
-### Set Title
-st.title("Income Level Predictor")
-st.write("""From the census income data, we built a machine learning-based classification model 
-to predict census income level based on their demographics.""")
+# Show Data
+data
 
-# Show data
-st.subheader('Census Data')
-if st.checkbox('Show Raw Data'):
-    st.write(data.head(20))
+# Let's Draw A Histogram
 
-st.sidebar.title('Parameters')
+### TV
+st.subheader('TV Ad Cost Distribution')
 
-# Age 
-age = st.sidebar.slider('Age', 0, 100, 24)
+# Use numpy to generate bins for age
+hist_values = np.histogram(data.TV, bins=300, range=(0,300))[0]
 
-# Hours
-hours = st.sidebar.slider('Hours Per Week', 1, 168, 80)
+# Show Bar Chart
+st.bar_chart(hist_values)
 
-# Education Level
-education_level_values = pd.Series(data['education_level'].unique()).str.strip()
-education_level_dummies = pd.get_dummies(education_level_values)
+### Newspaper
+st.subheader('Newspaper Ad Cost Distribution')
 
-education_level_sample = st.sidebar.selectbox("Education Level", education_level_values.values.tolist())
+# Use numpy to generate bins for age
+hist_values = np.histogram(data.newspaper, bins=300, range=(0,300))[0]
 
-education_level_sample_dummies = (education_level_dummies.loc[np.where(education_level_values.values == education_level_sample)[0]]
-                                  .values.tolist()[0])
+# Show Bar Chart
+st.bar_chart(hist_values)
 
-# Race
-race_values = pd.Series(data['race'].unique()).str.strip()
-race_dummies = pd.get_dummies(race_values)
+### Radio
+st.subheader('Radio Ad Cost Distribution')
 
-race_sample = st.sidebar.selectbox("Race", race_values.values.tolist())
-race_sample_dummies = race_dummies.loc[np.where(race_values.values == race_sample)[0]].values.tolist()[0]
+# Use numpy to generate bins for age
+hist_values = np.histogram(data.radio, bins=300, range=(0,300))[0]
 
+# Show Bar Chart
+st.bar_chart(hist_values)
 
-# Gender/Sex
-sex_values = pd.Series(data['sex'].unique()).str.strip()
-sex_dummies = pd.get_dummies(sex_values)
+### Sales
+st.subheader('Historical Sales Distribution')
 
-sex_sample = st.sidebar.selectbox("Gender", sex_values.values.tolist())
-sex_sample_dummies = sex_dummies.loc[np.where(sex_values.values == sex_sample)[0]].values.tolist()[0]
+# Use numpy to generate bins for age
+hist_values = np.histogram(data.sales, bins=300, range=(0,300))[0]
 
-# Prediction
-st.title("Predicted Income Level")
+# Show Bar Chart
+st.bar_chart(hist_values)
 
-# Load Model
-model = joblib.load('model/census_model.pkl')
+# Add sliders and assign them to variables
+st.sidebar.subheader('Advertising Costs')
 
-# Input
-sample_features = [age, hours] + education_level_sample_dummies + sex_sample_dummies + race_sample_dummies
+# TV Slider
+TV = st.sidebar.slider('TV Advertising Cost', 0, 300, 150) # (Title, min value, max value, default value)
 
-# Make Prediction
-prediction = model.predict([sample_features])[0]
+# Radio Slider
+radio = st.sidebar.slider('Radio Advertising Cost', 0, 50, 25) # (Title, min value, max value, default value)
 
-# Write out prediction
-if prediction == True:
-    st.write("Income Level is High (Above 50k$ Annually)")
-elif prediction == False:
-    st.write("Income Level is Low (below 50k$ Annually)")
+# Newspaper Slider
+newspaper = st.sidebar.slider('Newspaper Advertising Cost', 0, 250, 125) # (Title, min value, max value, default value)
+
+# Load saved machine learning model
+st.subheader("Predicted Sales")
+
+# Load model using joblib
+saved_model = joblib.load('advertising_model.sav')
+
+# Predict sales using variables/features
+predicted_sales = saved_model.predict([[TV, radio, newspaper]])[0]
+
+# Print prediction
+st.write(f"Predicted sales is {int(predicted_sales*1000)} dollars.")
